@@ -103,6 +103,16 @@
   .s-wait   { background: var(--amber-dim);  color: var(--amber);  border: 1px solid #f5a62344; }
   .s-term   { background: var(--red-dim);    color: var(--red);    border: 1px solid #ff5c5c44; }
 
+  /* Code block styling */
+  .code-block { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 1rem 1.25rem; font-family: var(--mono); font-size: 12.5px; color: #c9d1e0; line-height: 1.8; margin: 0.75rem 0; overflow-x: auto; }
+  .code-block .cmd { color: var(--green-text); }
+  .code-block .comment { color: var(--text3); }
+  .code-block .keyword { color: var(--purple); }
+  .code-block .str { color: var(--amber); }
+
+  /* New badge variant */
+  .badge-new { background: #00d08433; color: var(--green-text); font-size: 9px; font-family: var(--mono); padding: 2px 6px; border-radius: 3px; border: 1px solid #00d08455; }
+
   a { color: var(--blue); text-decoration: none; }
   a:hover { text-decoration: underline; }
   ::-webkit-scrollbar { width: 5px; }
@@ -134,6 +144,8 @@
     <li><a href="#ui"><span class="dot"></span>CLI vs GUI</a></li>
     <li><a href="#syscalls"><span class="dot"></span>System Calls</a></li>
     <li><a href="#32vs64"><span class="dot"></span>32-bit vs 64-bit</a></li>
+    <li><a href="#modes"><span class="dot"></span>User Mode vs Kernel Mode</a></li>
+    <li><a href="#interrupts"><span class="dot"></span>Interrupts &amp; Booting</a></li>
   </ul>
 
   <div class="nav-group">Process Management</div>
@@ -144,6 +156,7 @@
     <li><a href="#algorithms"><span class="dot"></span>Scheduling Algorithms</a></li>
     <li><a href="#context"><span class="dot"></span>Context Switching</a></li>
     <li><a href="#threads"><span class="dot"></span>Multithreading</a></li>
+    <li><a href="#thread-ops"><span class="dot"></span>Thread Operations</a></li>
   </ul>
 
   <div class="nav-group">Synchronization</div>
@@ -151,6 +164,8 @@
     <li><a href="#sync"><span class="dot"></span>Process Synchronization</a></li>
     <li><a href="#critical"><span class="dot"></span>Critical Section</a></li>
     <li><a href="#tools"><span class="dot"></span>Mutex, Semaphore, Monitor</a></li>
+    <li><a href="#spinlock"><span class="dot"></span>Spinlock &amp; Atomics</a></li>
+    <li><a href="#classical"><span class="dot"></span>Classical Problems</a></li>
     <li><a href="#deadlock"><span class="dot"></span>Deadlock</a></li>
     <li><a href="#banker"><span class="dot"></span>Banker's Algorithm</a></li>
   </ul>
@@ -158,6 +173,7 @@
   <div class="nav-group">Memory Management</div>
   <ul>
     <li><a href="#memory"><span class="dot"></span>Memory &amp; MMU</a></li>
+    <li><a href="#addr-binding"><span class="dot"></span>Address Binding</a></li>
     <li><a href="#allocation"><span class="dot"></span>Allocation Strategies</a></li>
     <li><a href="#paging"><span class="dot"></span>Paging &amp; Segmentation</a></li>
     <li><a href="#virtual"><span class="dot"></span>Virtual Memory</a></li>
@@ -168,8 +184,20 @@
   <div class="nav-group">I/O &amp; Storage</div>
   <ul>
     <li><a href="#io"><span class="dot"></span>I/O Management</a></li>
+    <li><a href="#io-hardware"><span class="dot"></span>I/O Hardware &amp; DMA</a></li>
     <li><a href="#disk"><span class="dot"></span>Disk Scheduling</a></li>
+    <li><a href="#raid"><span class="dot"></span>RAID</a></li>
     <li><a href="#filesystem"><span class="dot"></span>File System</a></li>
+    <li><a href="#directory"><span class="dot"></span>Directory Structure</a></li>
+    <li><a href="#freespace"><span class="dot"></span>Free Space Management</a></li>
+  </ul>
+
+  <div class="nav-group">Advanced</div>
+  <ul>
+    <li><a href="#concurrency"><span class="dot"></span>Concurrency &amp; Multicore</a></li>
+    <li><a href="#linux"><span class="dot"></span>Linux Commands</a></li>
+    <li><a href="#virtualization"><span class="dot"></span>Virtualization &amp; Docker</a></li>
+    <li><a href="#distributed"><span class="dot"></span>Distributed Systems</a></li>
   </ul>
 
   <div class="nav-group">Interview</div>
@@ -185,9 +213,9 @@
     <div class="hero-icon">🖥️</div>
     <div>
       <h1>Operating <span>Systems</span> Complete Notes</h1>
-      <p>Full coverage from kernel types and process management to CPU scheduling, memory management, virtual memory, deadlocks, synchronization tools, disk scheduling, and the most-asked interview questions.</p>
+      <p>Full coverage from kernel types and process management to CPU scheduling, memory management, virtual memory, deadlocks, synchronization tools, disk scheduling, Linux commands, virtualization, and the most-asked interview questions.</p>
       <div class="hero-meta">
-        <span>All topics</span><span>All levels</span><span>Updated 2026</span><span>Interview-focused</span>
+        <span>All topics</span><span>All levels</span><span>Updated 2026</span><span>Interview-focused</span><span>Roadmap-complete</span>
       </div>
     </div>
   </div>
@@ -467,9 +495,127 @@
     </table>
   </section>
 
-  <!-- ══ 07 ══ -->
+  <!-- ══ NEW: User Mode vs Kernel Mode ══ -->
+  <section id="modes">
+    <div class="section-tag tag-green">07 — System Structure <span class="badge-new">NEW</span></div>
+    <h2>User Mode vs Kernel Mode</h2>
+    <p class="section-intro">CPUs operate in two privilege levels to protect the OS from user programs. This hardware-enforced boundary is fundamental to OS security.</p>
+
+    <div class="highlight-box cyan">💡 The CPU has a hardware bit (privilege bit) that determines whether it's in kernel mode or user mode. Every modern OS uses this to protect critical operations.</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">User Mode <span class="badge badge-b">restricted</span></div>
+        <ul class="notes">
+          <li>Normal programs (your apps, browser, games) run here</li>
+          <li><strong>Limited access</strong> — cannot directly touch hardware or kernel memory</li>
+          <li>Cannot execute privileged instructions (e.g. directly modify CPU registers)</li>
+          <li>If a user program crashes, only that process dies — OS is safe</li>
+          <li>To do anything privileged, must make a <strong>system call</strong> to switch to kernel mode</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Kernel Mode <span class="badge badge-r">privileged</span></div>
+        <ul class="notes">
+          <li>The OS kernel runs here — <strong>full hardware access</strong></li>
+          <li>Can execute any CPU instruction, access any memory address</li>
+          <li>Manages hardware, handles interrupts, runs device drivers</li>
+          <li>A bug in kernel mode can crash the <strong>entire system</strong> (Blue Screen of Death)</li>
+          <li>Entry points: system calls, hardware interrupts, software exceptions</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Mode Switching Flow</h3>
+    <div class="flow">
+      <div class="flow-box">App (user mode)</div>
+      <div class="flow-arrow">→ syscall / interrupt →</div>
+      <div class="flow-box">Switch to kernel mode</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Kernel handles request</div>
+      <div class="flow-arrow">→ return →</div>
+      <div class="flow-box">Back to user mode</div>
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th>Feature</th><th>User Mode</th><th>Kernel Mode</th></tr></thead>
+      <tbody>
+        <tr><td>Access to hardware</td><td>No (indirect via syscalls)</td><td>Yes (full access)</td></tr>
+        <tr><td>Memory access</td><td>Own process memory only</td><td>All memory</td></tr>
+        <tr><td>CPU privilege level</td><td>Ring 3 (x86)</td><td>Ring 0 (x86)</td></tr>
+        <tr><td>Crash impact</td><td>Process crashes only</td><td>System crash (BSOD/Kernel Panic)</td></tr>
+        <tr><td>Who runs here</td><td>User applications</td><td>OS kernel, device drivers</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ══ NEW: Interrupts & Booting ══ -->
+  <section id="interrupts">
+    <div class="section-tag tag-green">08 — Interrupts &amp; Booting <span class="badge-new">NEW</span></div>
+    <h2>Interrupts &amp; Booting Process</h2>
+    <p class="section-intro">Interrupts let hardware signal the CPU asynchronously. Booting is the step-by-step process the system follows from power-on to a usable OS.</p>
+
+    <div class="card">
+      <div class="card-title">Interrupts <span class="badge badge-a">frequently asked</span></div>
+      <ul class="notes">
+        <li>A <strong>signal to the CPU</strong> that an event needs immediate attention — pauses the current task</li>
+        <li>CPU saves its current state, executes the <strong>Interrupt Service Routine (ISR)</strong>, then resumes</li>
+        <li><strong>Hardware Interrupts</strong>: generated by hardware devices (keyboard press, mouse click, disk I/O complete, timer)</li>
+        <li><strong>Software Interrupts (Traps)</strong>: triggered by a program — used for system calls (<code>INT 0x80</code> on x86 Linux)</li>
+        <li><strong>Exception</strong>: caused by a CPU error — e.g. division by zero, invalid memory access (page fault)</li>
+        <li>The <strong>Interrupt Vector Table (IVT)</strong> maps interrupt numbers to their handler addresses</li>
+      </ul>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Maskable vs Non-Maskable Interrupts</div>
+        <ul class="notes">
+          <li><strong>Maskable</strong>: can be temporarily disabled by the CPU (e.g. during a critical section)</li>
+          <li><strong>Non-Maskable (NMI)</strong>: cannot be ignored — used for catastrophic hardware failures (memory error, power failure)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Interrupt Handling Steps</div>
+        <ul class="notes">
+          <li>1. Hardware raises interrupt signal</li>
+          <li>2. CPU finishes current instruction</li>
+          <li>3. CPU saves program counter &amp; registers</li>
+          <li>4. CPU looks up ISR address in IVT</li>
+          <li>5. ISR executes</li>
+          <li>6. CPU restores state and resumes</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Booting Process</h3>
+    <div class="flow">
+      <div class="flow-box">Power ON</div><div class="flow-arrow">→</div>
+      <div class="flow-box">BIOS/UEFI (POST)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">MBR/GPT (Bootloader)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">GRUB/Bootloader</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Kernel loads</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Init/systemd</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Login prompt</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Booting Steps — Explained</div>
+      <ul class="notes">
+        <li><strong>POST (Power-On Self Test)</strong>: BIOS/UEFI checks if hardware (RAM, CPU, keyboard) is working</li>
+        <li><strong>BIOS/UEFI</strong>: firmware stored on the motherboard; initialises hardware and finds bootable device</li>
+        <li><strong>MBR (Master Boot Record)</strong>: first 512 bytes of a bootable disk — contains bootloader code and partition table</li>
+        <li><strong>UEFI + GPT</strong>: modern replacement for BIOS+MBR; supports larger disks and faster booting</li>
+        <li><strong>Bootloader (GRUB)</strong>: loads the OS kernel into memory</li>
+        <li><strong>Kernel initialisation</strong>: kernel sets up drivers, mounts root filesystem</li>
+        <li><strong>Init / systemd</strong>: first process (PID 1) — starts all system services and gets to login</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 09 — Process & Thread ══ -->
   <section id="process">
-    <div class="section-tag tag-amber">07 — Process &amp; Thread</div>
+    <div class="section-tag tag-amber">09 — Process &amp; Thread</div>
     <h2>Program vs Process vs Thread</h2>
     <p class="section-intro">Three fundamental concepts — know the exact difference between all three.</p>
 
@@ -514,9 +660,9 @@
     </table>
   </section>
 
-  <!-- ══ 08 ══ -->
+  <!-- ══ 10 — PCB ══ -->
   <section id="pcb">
-    <div class="section-tag tag-amber">08 — PCB &amp; Process States</div>
+    <div class="section-tag tag-amber">10 — PCB &amp; Process States</div>
     <h2>Process Control Block &amp; Process States</h2>
     <p class="section-intro">The OS uses a PCB to track every process, and every process moves through defined states during its lifetime.</p>
 
@@ -568,9 +714,9 @@
     </div>
   </section>
 
-  <!-- ══ 09 ══ -->
+  <!-- ══ 11 — CPU Scheduling ══ -->
   <section id="scheduling">
-    <div class="section-tag tag-amber">09 — CPU Scheduling</div>
+    <div class="section-tag tag-amber">11 — CPU Scheduling</div>
     <h2>CPU Scheduling</h2>
     <p class="section-intro">How the OS decides which process gets the CPU next — one of the most tested OS topics.</p>
 
@@ -616,9 +762,9 @@
     </table>
   </section>
 
-  <!-- ══ 10 ══ -->
+  <!-- ══ 12 — Algorithms ══ -->
   <section id="algorithms">
-    <div class="section-tag tag-amber">10 — Scheduling Algorithms</div>
+    <div class="section-tag tag-amber">12 — Scheduling Algorithms</div>
     <h2>CPU Scheduling Algorithms</h2>
     <p class="section-intro">Specific methods used to decide which process runs next — know all types with their advantages and disadvantages.</p>
 
@@ -693,9 +839,9 @@
     </table>
   </section>
 
-  <!-- ══ 11 ══ -->
+  <!-- ══ 13 — Context Switching ══ -->
   <section id="context">
-    <div class="section-tag tag-amber">11 — Context Switching</div>
+    <div class="section-tag tag-amber">13 — Context Switching</div>
     <h2>Context Switching &amp; Swapping</h2>
     <p class="section-intro">How the CPU switches between processes — saving and restoring state.</p>
 
@@ -718,9 +864,9 @@
     </div>
   </section>
 
-  <!-- ══ 12 ══ -->
+  <!-- ══ 14 — Multithreading ══ -->
   <section id="threads">
-    <div class="section-tag tag-cyan">12 — Multithreading</div>
+    <div class="section-tag tag-cyan">14 — Multithreading</div>
     <h2>Multithreading &amp; Thread Models</h2>
     <p class="section-intro">Running multiple threads at the same time within a single process for faster execution and better CPU utilisation.</p>
 
@@ -786,9 +932,65 @@
     </div>
   </section>
 
-  <!-- ══ 13 ══ -->
+  <!-- ══ NEW: Thread Operations ══ -->
+  <section id="thread-ops">
+    <div class="section-tag tag-cyan">15 — Thread Operations <span class="badge-new">NEW</span></div>
+    <h2>Thread Creation, Synchronization &amp; Pools</h2>
+    <p class="section-intro">Practical thread operations — how threads are created and managed in real systems including Java, Node.js, and thread pools.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Thread Creation</div>
+        <ul class="notes">
+          <li>A new thread is created within a process — it gets its own <strong>stack and registers</strong> but shares heap/code</li>
+          <li>Creation is cheaper than forking a process (no new memory space needed)</li>
+          <li>Each thread has: Thread ID, Stack, Program Counter, Register set</li>
+          <li>Threads are terminated with <code>join()</code> — parent waits for child thread to finish</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Thread Pools <span class="badge badge-g">production pattern</span></div>
+        <ul class="notes">
+          <li>A <strong>pre-created set of worker threads</strong> waiting for tasks</li>
+          <li>Avoids overhead of creating/destroying threads for every request</li>
+          <li>Tasks are submitted to a queue; idle threads pick them up</li>
+          <li>Used heavily in web servers (Tomcat, Node.js worker threads, Java ExecutorService)</li>
+          <li>Pool size tuning: too few = slow; too many = memory waste + context switch overhead</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Java Threads</h3>
+    <div class="card">
+      <ul class="notes">
+        <li>Java threads are <strong>kernel-level threads</strong> mapped 1:1 to OS threads</li>
+        <li>Create by extending <code>Thread</code> class or implementing <code>Runnable</code> interface</li>
+        <li><code>start()</code> — creates new thread and calls <code>run()</code> in it</li>
+        <li><code>join()</code> — current thread waits until the target thread finishes</li>
+        <li><code>synchronized</code> keyword — built-in monitor; only one thread enters the block at a time</li>
+        <li><code>ExecutorService</code> — Java's thread pool API (<code>Executors.newFixedThreadPool(n)</code>)</li>
+        <li><code>volatile</code> — ensures a variable's value is always read from main memory (not CPU cache)</li>
+      </ul>
+    </div>
+
+    <h3>Node.js Event Loop &amp; Worker Threads</h3>
+    <div class="card">
+      <ul class="notes">
+        <li>Node.js is <strong>single-threaded</strong> but non-blocking — uses an event loop for concurrency</li>
+        <li><strong>Event Loop</strong>: continuously polls for I/O completions, timers, and callbacks — executes them one at a time</li>
+        <li>I/O operations (file, network) are offloaded to the OS via <strong>libuv</strong> thread pool (default 4 threads)</li>
+        <li>CPU-bound tasks block the event loop — solution: <strong>Worker Threads</strong> (Node.js v10.5+)</li>
+        <li><code>worker_threads</code> module creates true OS threads for CPU-intensive work</li>
+        <li><strong>Cluster module</strong>: spawns multiple Node.js processes (one per CPU core) to scale across cores</li>
+      </ul>
+    </div>
+
+    <div class="highlight-box blue">💡 Node.js concurrency model: One thread + event loop + async I/O = handles thousands of requests. For CPU work, use Worker Threads. For scaling across cores, use Cluster.</div>
+  </section>
+
+  <!-- ══ 16 — Process Sync ══ -->
   <section id="sync">
-    <div class="section-tag tag-red">13 — Process Synchronization</div>
+    <div class="section-tag tag-red">16 — Process Synchronization</div>
     <h2>Process Synchronization</h2>
     <p class="section-intro">Ensuring multiple processes/threads work together correctly when sharing resources — prevents race conditions and data corruption.</p>
 
@@ -802,9 +1004,9 @@
     </div>
   </section>
 
-  <!-- ══ 14 ══ -->
+  <!-- ══ 17 — Critical Section ══ -->
   <section id="critical">
-    <div class="section-tag tag-red">14 — Critical Section</div>
+    <div class="section-tag tag-red">17 — Critical Section</div>
     <h2>Critical Section Problem</h2>
     <p class="section-intro">A part of the program where shared resources are accessed — must be protected so only one process enters at a time.</p>
 
@@ -825,9 +1027,9 @@
     </div>
   </section>
 
-  <!-- ══ 15 ══ -->
+  <!-- ══ 18 — Sync Tools ══ -->
   <section id="tools">
-    <div class="section-tag tag-red">15 — Synchronization Tools</div>
+    <div class="section-tag tag-red">18 — Synchronization Tools</div>
     <h2>Mutex, Semaphore &amp; Monitor</h2>
     <p class="section-intro">The three main tools used to solve the critical section problem and manage shared resources.</p>
 
@@ -874,9 +1076,119 @@
     </table>
   </section>
 
-  <!-- ══ 16 ══ -->
+  <!-- ══ NEW: Spinlock & Atomics ══ -->
+  <section id="spinlock">
+    <div class="section-tag tag-red">19 — Spinlock &amp; Atomics <span class="badge-new">NEW</span></div>
+    <h2>Spinlock, Atomic Operations &amp; Lock-Free Programming</h2>
+    <p class="section-intro">Low-level synchronization primitives used in OS kernels and high-performance systems where sleeping is too expensive.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Spinlock <span class="badge badge-b">busy-wait</span></div>
+        <ul class="notes">
+          <li>A lock where a thread <strong>continuously loops (spins)</strong> checking if the lock is free</li>
+          <li>Does <strong>NOT put the thread to sleep</strong> — wastes CPU cycles but avoids context switch overhead</li>
+          <li>Best when: lock is held for a <strong>very short time</strong> (microseconds)</li>
+          <li>Bad when: lock is held long — CPU burned on useless spinning</li>
+          <li>Used inside OS kernels (e.g. Linux kernel spinlocks) and interrupt handlers</li>
+          <li>Key operations: <code>spin_lock()</code>, <code>spin_unlock()</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Spinlock vs Mutex</div>
+        <ul class="notes">
+          <li><strong>Mutex</strong>: thread sleeps if lock unavailable → context switch → wake up later</li>
+          <li><strong>Spinlock</strong>: thread keeps running and retrying → no context switch</li>
+          <li>Mutex better for long critical sections; Spinlock better for very short ones</li>
+          <li>Spinlocks work on single-core systems only if interrupts are disabled</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Atomic Operations <span class="badge badge-g">hardware-guaranteed</span></div>
+      <ul class="notes">
+        <li>Operations that complete <strong>entirely or not at all</strong> — cannot be interrupted mid-way</li>
+        <li>Hardware provides atomic instructions: <code>test-and-set</code>, <code>compare-and-swap (CAS)</code>, <code>fetch-and-add</code></li>
+        <li><code>CAS(addr, expected, new)</code>: if *addr == expected, write new and return true — all in one uninterruptible step</li>
+        <li>Foundation of all lock-free and wait-free data structures</li>
+        <li>Java: <code>AtomicInteger.incrementAndGet()</code>, <code>AtomicReference.compareAndSet()</code></li>
+        <li>C++: <code>std::atomic&lt;int&gt;</code></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Lock-Free Programming</div>
+      <ul class="notes">
+        <li>Design data structures that multiple threads can use <strong>without traditional locks</strong></li>
+        <li>Uses atomic operations (CAS) to ensure correctness without mutexes</li>
+        <li><strong>Lock-free</strong>: at least one thread always makes progress (no global blocking)</li>
+        <li><strong>Wait-free</strong>: every thread makes progress in bounded steps (stronger guarantee)</li>
+        <li>Examples: lock-free queues, stacks (used in Java's ConcurrentLinkedQueue)</li>
+        <li>Benefits: no deadlock, no priority inversion; Cons: complex to implement correctly</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ NEW: Classical Sync Problems ══ -->
+  <section id="classical">
+    <div class="section-tag tag-red">20 — Classical Sync Problems <span class="badge-new">NEW</span></div>
+    <h2>Classical Synchronization Problems</h2>
+    <p class="section-intro">Famous problems used to test and demonstrate synchronization solutions — almost guaranteed to appear in interviews.</p>
+
+    <div class="card">
+      <div class="card-title">1. Producer-Consumer Problem <span class="badge badge-a">bounded buffer</span></div>
+      <ul class="notes">
+        <li><strong>Setup</strong>: Producer generates data and puts it in a shared buffer; Consumer takes it out</li>
+        <li><strong>Problems</strong>: Producer should wait if buffer is full; Consumer should wait if buffer is empty; both shouldn't access buffer at same time</li>
+        <li><strong>Solution</strong>: Use 3 semaphores — <code>mutex</code> (mutual exclusion), <code>full</code> (count of full slots), <code>empty</code> (count of empty slots)</li>
+        <li>Producer: <code>wait(empty)</code> → <code>wait(mutex)</code> → add item → <code>signal(mutex)</code> → <code>signal(full)</code></li>
+        <li>Consumer: <code>wait(full)</code> → <code>wait(mutex)</code> → remove item → <code>signal(mutex)</code> → <code>signal(empty)</code></li>
+        <li>Real examples: CPU and disk I/O, message queues, print spooler</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. Readers-Writers Problem</div>
+      <ul class="notes">
+        <li><strong>Setup</strong>: Multiple readers can read simultaneously; writers need exclusive access</li>
+        <li><strong>Rules</strong>: Multiple readers allowed at once; writer must wait for all readers to finish; readers must wait if writer is writing</li>
+        <li><strong>First Readers-Writers</strong>: readers have priority — writers may starve</li>
+        <li><strong>Second Readers-Writers</strong>: writers have priority — readers may starve</li>
+        <li>Solution: semaphore <code>rw_mutex</code> for writer exclusion, <code>mutex</code> for read count, integer <code>read_count</code></li>
+        <li>Real examples: database systems, shared file access, web caches</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. Dining Philosophers Problem <span class="badge badge-r">deadlock showcase</span></div>
+      <ul class="notes">
+        <li><strong>Setup</strong>: 5 philosophers sit at a round table; each needs 2 forks to eat; one fork between each pair</li>
+        <li><strong>Problem</strong>: if all pick up left fork simultaneously → deadlock (circular wait)</li>
+        <li><strong>Solutions</strong>:</li>
+        <li>Allow only 4 philosophers at table at once (breaks circular wait)</li>
+        <li>Odd philosophers pick left first; even pick right first (breaks symmetry)</li>
+        <li>Pick up both forks atomically — only if both available</li>
+        <li>Use a waiter/arbitrator who grants permission to pick up forks</li>
+        <li>Demonstrates all 4 deadlock conditions and how to break them</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">4. Sleeping Barber Problem</div>
+      <ul class="notes">
+        <li><strong>Setup</strong>: A barber shop with one barber, one barber chair, and N waiting chairs</li>
+        <li>If no customers: barber sleeps in chair. Customer arrives: if barber sleeping → wake him; if waiting chairs free → sit and wait; if all chairs full → leave</li>
+        <li><strong>Problem</strong>: race condition between checking if barber asleep and sitting down</li>
+        <li><strong>Solution</strong>: semaphores <code>customers</code> (waiting count), <code>barbers</code> (idle barbers), <code>mutex</code> (protect shared state)</li>
+        <li>Real analogy: thread pool — sleeping threads = idle workers; customers = incoming tasks</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 21 — Deadlock ══ -->
   <section id="deadlock">
-    <div class="section-tag tag-red">16 — Deadlock</div>
+    <div class="section-tag tag-red">21 — Deadlock</div>
     <h2>Deadlock</h2>
     <p class="section-intro">A situation where two or more processes are permanently stuck, each waiting for resources held by the others.</p>
 
@@ -949,9 +1261,9 @@
     </div>
   </section>
 
-  <!-- ══ 17 ══ -->
+  <!-- ══ 22 — Banker's ══ -->
   <section id="banker">
-    <div class="section-tag tag-red">17 — Banker's Algorithm</div>
+    <div class="section-tag tag-red">22 — Banker's Algorithm</div>
     <h2>Banker's Algorithm &amp; Wait-For Graph</h2>
     <p class="section-intro">The classic deadlock avoidance algorithm — checks if resource allocation will lead to a safe state before granting.</p>
 
@@ -977,9 +1289,9 @@
     </div>
   </section>
 
-  <!-- ══ 18 ══ -->
+  <!-- ══ 23 — Memory ══ -->
   <section id="memory">
-    <div class="section-tag tag-purple">18 — Memory Management</div>
+    <div class="section-tag tag-purple">23 — Memory Management</div>
     <h2>Memory Management</h2>
     <p class="section-intro">The OS job of allocating, tracking, and freeing memory so programs can run efficiently.</p>
 
@@ -1039,9 +1351,56 @@
     </div>
   </section>
 
-  <!-- ══ 19 ══ -->
+  <!-- ══ NEW: Address Binding ══ -->
+  <section id="addr-binding">
+    <div class="section-tag tag-purple">24 — Address Binding <span class="badge-new">NEW</span></div>
+    <h2>Address Binding</h2>
+    <p class="section-intro">The process of mapping a program's symbolic addresses to actual memory addresses — happens at different stages of program execution.</p>
+
+    <div class="card">
+      <div class="card-title">What is Address Binding?</div>
+      <ul class="notes">
+        <li>A program uses symbolic names (variable names, function names) that must be <strong>converted to memory addresses</strong></li>
+        <li>This conversion (binding) can happen at different times — compile, load, or runtime</li>
+      </ul>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">Compile-Time Binding</div>
+        <ul class="notes">
+          <li>Addresses are fixed <strong>at compile time</strong></li>
+          <li>If the program must always load at address X, the compiler generates absolute addresses</li>
+          <li>Very inflexible — program must always be loaded at same location</li>
+          <li>Example: old DOS programs (COM files)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Load-Time Binding</div>
+        <ul class="notes">
+          <li>Addresses resolved <strong>when the program is loaded</strong> into memory</li>
+          <li>Compiler generates relocatable code; loader converts to absolute addresses</li>
+          <li>More flexible than compile-time but still fixed once loaded</li>
+          <li>Must reload to move in memory</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Runtime Binding <span class="badge badge-g">modern OS</span></div>
+        <ul class="notes">
+          <li>Addresses translated <strong>during execution</strong> by the MMU</li>
+          <li>Process can be moved in memory while running</li>
+          <li>Requires hardware support (MMU + relocation register)</li>
+          <li>Used by all modern OSes (enables virtual memory)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="highlight-box purple">💡 Modern OSes use runtime binding. The CPU generates a logical address; the MMU adds the base register value to get the physical address — every single memory access, in hardware, at full speed.</div>
+  </section>
+
+  <!-- ══ 25 — Allocation ══ -->
   <section id="allocation">
-    <div class="section-tag tag-purple">19 — Memory Allocation</div>
+    <div class="section-tag tag-purple">25 — Memory Allocation</div>
     <h2>Free Space Management &amp; Allocation Strategies</h2>
     <p class="section-intro">How the OS decides where in RAM to place each process.</p>
 
@@ -1099,9 +1458,9 @@
     <div class="highlight-box">⚠ <strong>Internal fragmentation</strong>: wasted space inside an allocated block (block too big for process). <strong>External fragmentation</strong>: enough total free space exists but it's scattered in non-contiguous holes.</div>
   </section>
 
-  <!-- ══ 20 ══ -->
+  <!-- ══ 26 — Paging ══ -->
   <section id="paging">
-    <div class="section-tag tag-purple">20 — Paging &amp; Segmentation</div>
+    <div class="section-tag tag-purple">26 — Paging &amp; Segmentation</div>
     <h2>Paging &amp; Segmentation</h2>
     <p class="section-intro">Non-contiguous memory allocation techniques that eliminate external fragmentation.</p>
 
@@ -1138,9 +1497,9 @@
     </table>
   </section>
 
-  <!-- ══ 21 ══ -->
+  <!-- ══ 27 — Virtual Memory ══ -->
   <section id="virtual">
-    <div class="section-tag tag-purple">21 — Virtual Memory</div>
+    <div class="section-tag tag-purple">27 — Virtual Memory</div>
     <h2>Virtual Memory &amp; Demand Paging</h2>
     <p class="section-intro">Allows programs larger than RAM to run by using disk space as an extension of RAM.</p>
 
@@ -1193,9 +1552,9 @@
     </div>
   </section>
 
-  <!-- ══ 22 ══ -->
+  <!-- ══ 28 — Page Replacement ══ -->
   <section id="page-replace">
-    <div class="section-tag tag-purple">22 — Page Replacement</div>
+    <div class="section-tag tag-purple">28 — Page Replacement</div>
     <h2>Page Replacement Algorithms</h2>
     <p class="section-intro">When RAM is full and a new page is needed, the OS must decide which existing page to remove — these algorithms decide which.</p>
 
@@ -1244,21 +1603,34 @@
       </div>
     </div>
 
+    <div class="card">
+      <div class="card-title">Clock (Second Chance) Algorithm <span class="badge badge-g">practical LRU approximation</span> <span class="badge-new">NEW</span></div>
+      <ul class="notes">
+        <li>An efficient approximation of LRU — used by Linux and many real OSes</li>
+        <li>Each page has a <strong>reference bit (R)</strong>: set to 1 when page is accessed, 0 when not</li>
+        <li>A clock hand sweeps through frames in circular order</li>
+        <li>If R=1: give it a second chance — set R=0 and move to next frame</li>
+        <li>If R=0: this page hasn't been used recently → <strong>replace it</strong></li>
+        <li>Much cheaper than tracking full LRU order; only one bit per page</li>
+      </ul>
+    </div>
+
     <table class="compare-table">
       <thead><tr><th>Algorithm</th><th>Removes</th><th>Practical?</th><th>Notes</th></tr></thead>
       <tbody>
         <tr><td>FIFO</td><td>Oldest page</td><td>Yes</td><td>Belady's anomaly possible</td></tr>
         <tr><td>Optimal</td><td>Furthest-future page</td><td>No</td><td>Benchmark only</td></tr>
         <tr><td>LRU</td><td>Least recently used</td><td>Yes</td><td>Best real-world performance</td></tr>
+        <tr><td>Clock</td><td>First R=0 page found</td><td>Yes (Linux)</td><td>LRU approximation, cheap</td></tr>
         <tr><td>LFU</td><td>Least frequently used</td><td>Yes</td><td>Needs frequency counter</td></tr>
         <tr><td>MFU</td><td>Most frequently used</td><td>Rarely</td><td>Unusual assumption</td></tr>
       </tbody>
     </table>
   </section>
 
-  <!-- ══ 23 ══ -->
+  <!-- ══ 29 — Thrashing ══ -->
   <section id="thrashing">
-    <div class="section-tag tag-purple">23 — Thrashing &amp; TLB</div>
+    <div class="section-tag tag-purple">29 — Thrashing &amp; TLB</div>
     <h2>Thrashing, TLB &amp; Page Table</h2>
     <p class="section-intro">Performance-critical OS concepts — thrashing destroys performance; TLB speeds up address translation.</p>
 
@@ -1284,9 +1656,9 @@
     </div>
   </section>
 
-  <!-- ══ 24 ══ -->
+  <!-- ══ 30 — I/O ══ -->
   <section id="io">
-    <div class="section-tag tag-cyan">24 — I/O Management</div>
+    <div class="section-tag tag-cyan">30 — I/O Management</div>
     <h2>I/O Management, Buffering &amp; Spooling</h2>
     <p class="section-intro">How the OS manages communication with devices, and techniques to improve I/O performance.</p>
 
@@ -1319,9 +1691,68 @@
     </div>
   </section>
 
-  <!-- ══ 25 ══ -->
+  <!-- ══ NEW: I/O Hardware & DMA ══ -->
+  <section id="io-hardware">
+    <div class="section-tag tag-cyan">31 — I/O Hardware &amp; DMA <span class="badge-new">NEW</span></div>
+    <h2>I/O Hardware, Polling, Interrupts &amp; DMA</h2>
+    <p class="section-intro">How the CPU actually communicates with hardware devices — three techniques with very different performance characteristics.</p>
+
+    <div class="card">
+      <div class="card-title">Device Controllers</div>
+      <ul class="notes">
+        <li>Hardware components that manage communication between CPU and peripheral devices</li>
+        <li>Each controller has <strong>registers</strong> (status, control, data) that the CPU reads/writes</li>
+        <li>CPU sends commands by writing to controller registers; reads status to check completion</li>
+        <li>Examples: disk controller, USB controller, network interface card (NIC)</li>
+      </ul>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">Polling (Busy-Wait I/O) <span class="badge badge-r">CPU wasteful</span></div>
+        <ul class="notes">
+          <li>CPU <strong>continuously checks</strong> the device status register in a loop</li>
+          <li>Simple to implement; works for fast devices</li>
+          <li>Wastes CPU cycles — CPU cannot do other work while waiting</li>
+          <li>Example: <code>while(device.busy) { /* spin */ }</code></li>
+          <li>OK for very fast devices (microseconds); terrible for slow ones</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Interrupt-Driven I/O <span class="badge badge-g">efficient</span></div>
+        <ul class="notes">
+          <li>CPU starts I/O operation, then <strong>goes back to doing useful work</strong></li>
+          <li>Device raises an interrupt when it finishes</li>
+          <li>CPU handles the interrupt via ISR, then resumes normal work</li>
+          <li>Much better CPU utilisation than polling</li>
+          <li>Overhead: interrupt handling, context save/restore for each I/O</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">DMA — Direct Memory Access <span class="badge badge-b">best for bulk</span></div>
+        <ul class="notes">
+          <li>A special DMA controller transfers data <strong>directly between device and memory</strong> without CPU involvement</li>
+          <li>CPU programs the DMA (source, destination, size), then goes to other work</li>
+          <li>DMA does the transfer; raises interrupt when done</li>
+          <li>Best for large data transfers (disk reads, network packets, video)</li>
+          <li>CPU only involved at start and end — not during transfer</li>
+        </ul>
+      </div>
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th>Technique</th><th>CPU involvement</th><th>Best for</th><th>Drawback</th></tr></thead>
+      <tbody>
+        <tr><td>Polling</td><td>100% during wait</td><td>Very fast, simple devices</td><td>Wastes CPU</td></tr>
+        <tr><td>Interrupt-Driven</td><td>Only during ISR</td><td>Normal I/O</td><td>Many interrupts = overhead</td></tr>
+        <tr><td>DMA</td><td>Only at start/end</td><td>Large data transfers</td><td>Needs DMA hardware</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ══ 32 — Disk Scheduling ══ -->
   <section id="disk">
-    <div class="section-tag tag-cyan">25 — Disk Scheduling</div>
+    <div class="section-tag tag-cyan">32 — Disk Scheduling</div>
     <h2>Disk Scheduling Algorithms</h2>
     <p class="section-intro">Decides which disk I/O request to serve first — goal is to minimise seek time (time for disk head to move to the right track).</p>
 
@@ -1361,20 +1792,93 @@
       </ul>
     </div>
 
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">LOOK <span class="badge-new">NEW</span></div>
+        <ul class="notes">
+          <li>Like SCAN but head <strong>only goes as far as the last request</strong> in each direction — doesn't go to disk end</li>
+          <li>More efficient than SCAN — avoids unnecessary travel to disk boundaries</li>
+          <li>Still reverses direction at last request</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">C-LOOK <span class="badge-new">NEW</span></div>
+        <ul class="notes">
+          <li>Like C-SCAN but head only goes to the <strong>last request</strong> (not disk end) before jumping back</li>
+          <li>Most efficient of all SCAN variants</li>
+          <li>Uniform wait times + no wasted travel</li>
+        </ul>
+      </div>
+    </div>
+
     <table class="compare-table">
       <thead><tr><th>Algorithm</th><th>Head movement</th><th>Starvation?</th><th>Notes</th></tr></thead>
       <tbody>
         <tr><td>FCFS</td><td>Unpredictable</td><td>No</td><td>Simple but slow</td></tr>
         <tr><td>SSTF</td><td>Minimum per step</td><td>Yes</td><td>Greedy; near requests favoured</td></tr>
-        <tr><td>SCAN</td><td>Bi-directional sweep</td><td>No</td><td>Like elevator</td></tr>
-        <tr><td>C-SCAN</td><td>One-direction sweep + jump</td><td>No</td><td>Uniform wait times</td></tr>
+        <tr><td>SCAN</td><td>Bi-directional sweep to end</td><td>No</td><td>Like elevator</td></tr>
+        <tr><td>C-SCAN</td><td>One-direction sweep + jump from end</td><td>No</td><td>Uniform wait times</td></tr>
+        <tr><td>LOOK</td><td>Bi-directional sweep to last request</td><td>No</td><td>More efficient than SCAN</td></tr>
+        <tr><td>C-LOOK</td><td>One-direction to last + jump back</td><td>No</td><td>Most efficient variant</td></tr>
       </tbody>
     </table>
   </section>
 
-  <!-- ══ 26 ══ -->
+  <!-- ══ NEW: RAID ══ -->
+  <section id="raid">
+    <div class="section-tag tag-cyan">33 — RAID <span class="badge-new">NEW</span></div>
+    <h2>RAID — Redundant Array of Independent Disks</h2>
+    <p class="section-intro">Combines multiple physical disks into one logical unit for improved performance, redundancy, or both. Crucial for production systems.</p>
+
+    <div class="highlight-box blue">💡 RAID trades disk capacity for speed and/or fault tolerance. Know RAID 0, 1, and 5 — these are the most commonly asked in interviews.</div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">RAID 0 — Striping <span class="badge badge-b">speed only</span></div>
+        <ul class="notes">
+          <li>Data is <strong>split (striped)</strong> across 2+ disks in blocks</li>
+          <li>Reads and writes happen in parallel → <strong>double the speed</strong></li>
+          <li><strong>No redundancy</strong> — if one disk fails, all data is lost</li>
+          <li>Min disks: 2. Usable capacity: 100% of total</li>
+          <li>Use case: video editing, scratch disks, where speed matters &gt; safety</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">RAID 1 — Mirroring <span class="badge badge-g">safety only</span></div>
+        <ul class="notes">
+          <li>Data is <strong>mirrored identically</strong> on 2+ disks</li>
+          <li>If one disk fails, data is still on the other — <strong>full redundancy</strong></li>
+          <li>Read performance improved (can read from either disk)</li>
+          <li>Write speed same (must write to all disks)</li>
+          <li>Min disks: 2. Usable capacity: 50% (1 disk wasted for mirror)</li>
+          <li>Use case: OS drives, critical data that cannot be lost</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">RAID 5 — Striping + Parity <span class="badge badge-a">balanced</span></div>
+        <ul class="notes">
+          <li>Data striped across disks + <strong>parity info distributed</strong> across all disks</li>
+          <li>Can recover from <strong>one disk failure</strong> using parity</li>
+          <li>Good read performance; write slightly slower (parity calculation)</li>
+          <li>Min disks: 3. Usable capacity: (N−1)/N total (1 disk worth = parity)</li>
+          <li>Use case: most popular for servers — balance of speed, capacity, and fault tolerance</li>
+        </ul>
+      </div>
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th>RAID</th><th>Min Disks</th><th>Fault Tolerance</th><th>Read Speed</th><th>Write Speed</th><th>Capacity</th></tr></thead>
+      <tbody>
+        <tr><td>RAID 0</td><td>2</td><td>None (0 failures)</td><td>Fast</td><td>Fast</td><td>100%</td></tr>
+        <tr><td>RAID 1</td><td>2</td><td>1 disk failure</td><td>Fast</td><td>Same</td><td>50%</td></tr>
+        <tr><td>RAID 5</td><td>3</td><td>1 disk failure</td><td>Fast</td><td>Moderate</td><td>(N-1)/N</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ══ 34 — File System ══ -->
   <section id="filesystem">
-    <div class="section-tag tag-cyan">26 — File System</div>
+    <div class="section-tag tag-cyan">34 — File System</div>
     <h2>File System</h2>
     <p class="section-intro">How the OS organises, stores, and retrieves data on storage devices.</p>
 
@@ -1427,9 +1931,407 @@
     </div>
   </section>
 
-  <!-- ══ 27 ══ -->
+  <!-- ══ NEW: Directory Structure ══ -->
+  <section id="directory">
+    <div class="section-tag tag-cyan">35 — Directory Structure <span class="badge-new">NEW</span></div>
+    <h2>Directory Structure</h2>
+    <p class="section-intro">How the OS organises the namespace for files — evolved from simple flat structures to hierarchical trees.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">Single-Level Directory</div>
+        <ul class="notes">
+          <li>All files in a <strong>single directory</strong> — one folder for everyone</li>
+          <li>Simplest structure; easy to implement</li>
+          <li>Problem: naming conflicts — two users can't have a file with same name</li>
+          <li>Doesn't scale — used in early, simple systems</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Two-Level Directory</div>
+        <ul class="notes">
+          <li>Each <strong>user gets their own directory</strong>; master directory at top</li>
+          <li>Solves naming conflicts between users</li>
+          <li>Problem: users can't organise files into subdirectories</li>
+          <li>No sharing between users easily</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Tree-Structured <span class="badge badge-g">modern OSes</span></div>
+        <ul class="notes">
+          <li>Directories can contain <strong>files and subdirectories</strong> — arbitrary depth</li>
+          <li>Absolute path: <code>/home/user/docs/file.txt</code></li>
+          <li>Relative path: from current working directory</li>
+          <li>Used by all modern OSes (Linux, Windows, macOS)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Acyclic-Graph &amp; General Graph Directories</div>
+      <ul class="notes">
+        <li><strong>Acyclic-Graph</strong>: allows <strong>shared subdirectories/files</strong> — multiple paths to same file (hard links/symlinks in Linux)</li>
+        <li><strong>General Graph</strong>: allows cycles — very complex; requires garbage collection to find unreachable files</li>
+        <li>Linux uses tree structure + symbolic links (soft links point to a path) + hard links (point to same inode)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ NEW: Free Space Management ══ -->
+  <section id="freespace">
+    <div class="section-tag tag-cyan">36 — Free Space Management <span class="badge-new">NEW</span></div>
+    <h2>Free Space Management</h2>
+    <p class="section-intro">The OS must track which disk blocks are free so it can allocate them to new files. Different methods have different time/space tradeoffs.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Bit Vector (Bitmap)</div>
+        <ul class="notes">
+          <li>One bit per disk block: <strong>1 = free, 0 = allocated</strong> (or reversed)</li>
+          <li>Simple to implement; easy to find contiguous free blocks</li>
+          <li>Fast with bitwise operations — CPU can check 32/64 blocks at once</li>
+          <li>Requires extra space: 1 bit per block (e.g. 1 TB disk with 4 KB blocks = 32 MB bitmap)</li>
+          <li>Used by NTFS and ext4</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Free List (Linked List)</div>
+        <ul class="notes">
+          <li>All free blocks are <strong>linked together</strong> in a list</li>
+          <li>No wasted space — uses the free blocks themselves to store pointers</li>
+          <li>Finding a contiguous group of free blocks is slow — must traverse list</li>
+          <li>Used in some simple file systems</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Grouping</div>
+        <ul class="notes">
+          <li>First free block stores addresses of <strong>N free blocks</strong>; last of those stores N more, etc.</li>
+          <li>Can find large numbers of free blocks quickly</li>
+          <li>More efficient than simple linked list for bulk allocation</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Counting</div>
+        <ul class="notes">
+          <li>Stores (address, count) pairs: "block X is free, and the next 5 blocks after it are also free"</li>
+          <li>Efficient when free blocks tend to be <strong>contiguous</strong> (e.g. after file deletion)</li>
+          <li>Shorter list than bit vector when many contiguous free regions exist</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ NEW: Concurrency & Multicore ══ -->
+  <section id="concurrency">
+    <div class="section-tag tag-blue">37 — Concurrency &amp; Multicore <span class="badge-new">NEW</span></div>
+    <h2>Concurrency, Race Conditions &amp; Multicore Processing</h2>
+    <p class="section-intro">Advanced concurrency concepts that matter for modern multi-core systems and parallel computing.</p>
+
+    <div class="card">
+      <div class="card-title">Race Condition — Deep Dive <span class="badge badge-r">must know</span></div>
+      <ul class="notes">
+        <li>A race condition is when the program output <strong>depends on the relative timing</strong> of concurrent operations</li>
+        <li>Root cause: non-atomic read-modify-write operations on shared data</li>
+        <li>Example: <code>counter++</code> is 3 machine instructions (read, add, write) — interleaving causes incorrect results</li>
+        <li><strong>Data race</strong>: specifically when two threads access same memory with no synchronization and at least one is a write</li>
+        <li>Prevention: atomics, mutexes, immutable data, message passing (no shared state)</li>
+      </ul>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Multicore Processing</div>
+        <ul class="notes">
+          <li>Modern CPUs have <strong>multiple cores</strong> — each is an independent processor</li>
+          <li>Cores share L3 cache and RAM; each has private L1/L2</li>
+          <li><strong>Cache coherence problem</strong>: if core 1 updates a variable, core 2's cache may have stale value</li>
+          <li>Hardware solves this with <strong>MESI protocol</strong> (Modified, Exclusive, Shared, Invalid)</li>
+          <li><strong>False sharing</strong>: two variables in the same cache line accessed by different cores → performance killer</li>
+          <li>Hyper-threading: one physical core appears as 2 logical CPUs (shares execution units)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Parallel Computing</div>
+        <ul class="notes">
+          <li><strong>Data parallelism</strong>: same operation on different parts of data simultaneously (array addition)</li>
+          <li><strong>Task parallelism</strong>: different tasks run on different processors at the same time</li>
+          <li><strong>Amdahl's Law</strong>: speedup limited by the serial portion — if 20% can't be parallelised, max speedup = 5× regardless of cores</li>
+          <li><strong>OpenMP</strong>: pragma-based parallelism for C/C++/Fortran</li>
+          <li><strong>SIMD</strong>: Single Instruction Multiple Data — one instruction operates on multiple data points (GPU cores, AVX)</li>
+          <li>Parallel overhead: thread creation, synchronization, communication, load imbalance</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Memory Ordering &amp; Memory Barriers</div>
+      <ul class="notes">
+        <li>CPUs and compilers may <strong>reorder instructions</strong> for performance — can break concurrent code</li>
+        <li><strong>Memory barrier (fence)</strong>: instruction that prevents reordering across it</li>
+        <li><strong>volatile</strong> in Java: prevents caching + prevents reordering (but not atomicity)</li>
+        <li><strong>happens-before</strong> relationship: if A happens-before B, A's effects are visible to B</li>
+        <li>Weak memory models (ARM, POWER) reorder more than x86; need explicit barriers</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ NEW: Linux Commands ══ -->
+  <section id="linux">
+    <div class="section-tag tag-blue">38 — Linux Commands <span class="badge-new">NEW</span></div>
+    <h2>Linux Commands &amp; Shell Scripting</h2>
+    <p class="section-intro">Essential Linux commands for developers — grouped by category. These appear in both interviews and day-to-day work.</p>
+
+    <h3>File &amp; Directory Commands</h3>
+    <div class="code-block">
+<span class="comment"># Navigation</span>
+<span class="cmd">pwd</span>              <span class="comment"># Print working directory</span>
+<span class="cmd">ls</span>               <span class="comment"># List files</span>
+<span class="cmd">ls -la</span>           <span class="comment"># List all (incl. hidden) with details</span>
+<span class="cmd">cd /path</span>         <span class="comment"># Change directory</span>
+<span class="cmd">cd ..</span>            <span class="comment"># Go up one directory</span>
+
+<span class="comment"># File operations</span>
+<span class="cmd">mkdir mydir</span>      <span class="comment"># Create directory</span>
+<span class="cmd">rm file.txt</span>      <span class="comment"># Remove file</span>
+<span class="cmd">rm -rf mydir</span>     <span class="comment"># Remove directory and contents (careful!)</span>
+<span class="cmd">cp src dest</span>      <span class="comment"># Copy file</span>
+<span class="cmd">mv old new</span>       <span class="comment"># Move / rename file</span>
+<span class="cmd">cat file.txt</span>     <span class="comment"># Print file contents</span>
+<span class="cmd">touch file.txt</span>   <span class="comment"># Create empty file / update timestamp</span>
+
+<span class="comment"># Search</span>
+<span class="cmd">grep "text" file</span> <span class="comment"># Search for text in file</span>
+<span class="cmd">grep -r "text" .</span> <span class="comment"># Search recursively in all files</span>
+<span class="cmd">find . -name "*.txt"</span> <span class="comment"># Find files by name</span>
+<span class="cmd">find . -size +10M</span>    <span class="comment"># Find files larger than 10MB</span>
+    </div>
+
+    <h3>Process Commands</h3>
+    <div class="code-block">
+<span class="cmd">ps</span>               <span class="comment"># List processes for current shell</span>
+<span class="cmd">ps aux</span>           <span class="comment"># List all processes (all users, detailed)</span>
+<span class="cmd">top</span>              <span class="comment"># Live process monitor (CPU, memory usage)</span>
+<span class="cmd">htop</span>             <span class="comment"># Better top (interactive, colored)</span>
+<span class="cmd">kill 1234</span>        <span class="comment"># Send SIGTERM to PID 1234 (graceful stop)</span>
+<span class="cmd">kill -9 1234</span>     <span class="comment"># Send SIGKILL to PID 1234 (force kill)</span>
+<span class="cmd">jobs</span>             <span class="comment"># List background jobs</span>
+<span class="cmd">bg</span>               <span class="comment"># Resume job in background</span>
+<span class="cmd">fg</span>               <span class="comment"># Bring job to foreground</span>
+<span class="cmd">nohup cmd &amp;</span>     <span class="comment"># Run command in background, persist after logout</span>
+    </div>
+
+    <h3>Permissions</h3>
+    <div class="code-block">
+<span class="comment"># chmod: change permissions</span>
+<span class="comment"># Pattern: chmod [who][+/-][permission] file</span>
+<span class="comment"># Who: u=user, g=group, o=others, a=all</span>
+<span class="comment"># Permissions: r=read(4), w=write(2), x=execute(1)</span>
+
+<span class="cmd">chmod +x script.sh</span>   <span class="comment"># Add execute permission</span>
+<span class="cmd">chmod 755 file</span>       <span class="comment"># rwxr-xr-x (owner full, others read+execute)</span>
+<span class="cmd">chmod 644 file</span>       <span class="comment"># rw-r--r-- (owner read+write, others read)</span>
+<span class="cmd">chmod 600 secret</span>     <span class="comment"># rw------- (owner only)</span>
+
+<span class="cmd">chown user:group file</span> <span class="comment"># Change file owner and group</span>
+<span class="cmd">chown -R user dir</span>    <span class="comment"># Change owner recursively</span>
+
+<span class="comment"># View permissions with ls -l:</span>
+<span class="comment"># -rwxr-xr-x  1 user group 4096 Jun 1 file.sh</span>
+<span class="comment">#  ^^^ ^^^ ^^^  = owner | group | others permissions</span>
+    </div>
+
+    <h3>Shell Scripting Basics</h3>
+    <div class="code-block">
+<span class="comment">#!/bin/bash       # Shebang — tells OS to use bash</span>
+
+<span class="comment"># Variables</span>
+<span class="keyword">NAME</span>="Alice"
+echo "Hello $NAME"
+
+<span class="comment"># Conditionals</span>
+<span class="keyword">if</span> [ "$NAME" == "Alice" ]; <span class="keyword">then</span>
+  echo "Welcome Alice"
+<span class="keyword">else</span>
+  echo "Who are you?"
+<span class="keyword">fi</span>
+
+<span class="comment"># Loops</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> 1 2 3; <span class="keyword">do</span>
+  echo "Count: $i"
+<span class="keyword">done</span>
+
+<span class="comment"># Functions</span>
+greet() {
+  echo "Hello $1"   <span class="comment"># $1 = first argument</span>
+}
+greet "World"
+
+<span class="comment"># Special variables</span>
+<span class="comment"># $0 = script name, $1..$9 = arguments</span>
+<span class="comment"># $# = argument count, $? = last exit code</span>
+<span class="comment"># $$ = current process PID</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Useful One-liners &amp; Pipes</div>
+      <ul class="notes">
+        <li><code>|</code> (pipe): sends output of one command to input of next — <code>ps aux | grep chrome</code></li>
+        <li><code>&gt;</code>: redirect output to file (overwrite) — <code>echo "text" &gt; file.txt</code></li>
+        <li><code>&gt;&gt;</code>: append to file — <code>echo "more" &gt;&gt; file.txt</code></li>
+        <li><code>wc -l file</code>: count lines in file</li>
+        <li><code>sort file | uniq -c</code>: sort and count unique lines</li>
+        <li><code>tail -f log.txt</code>: follow a log file in real time</li>
+        <li><code>df -h</code>: disk usage by partition</li>
+        <li><code>du -sh *</code>: size of each file/directory</li>
+        <li><code>free -h</code>: RAM usage summary</li>
+        <li><code>lsof -i :8080</code>: which process is using port 8080</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ NEW: Virtualization ══ -->
+  <section id="virtualization">
+    <div class="section-tag tag-blue">39 — Virtualization &amp; Docker <span class="badge-new">NEW</span></div>
+    <h2>Virtualization, Hypervisors &amp; Containers</h2>
+    <p class="section-intro">Running multiple OS environments on one machine — foundational to cloud computing, DevOps, and modern deployment.</p>
+
+    <div class="card">
+      <div class="card-title">Virtualization</div>
+      <ul class="notes">
+        <li>Technique to run <strong>multiple operating systems</strong> on a single physical machine simultaneously</li>
+        <li>Each virtual machine (VM) believes it has its own hardware</li>
+        <li>Enables better hardware utilisation, isolation, and easy deployment</li>
+        <li>Foundation of cloud computing (AWS EC2, Google Compute Engine are VMs)</li>
+      </ul>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Type 1 Hypervisor (Bare Metal) <span class="badge badge-g">production</span></div>
+        <ul class="notes">
+          <li>Runs <strong>directly on hardware</strong> — no host OS underneath</li>
+          <li>More efficient and faster — direct hardware access</li>
+          <li>VMs managed by the hypervisor directly</li>
+          <li>Examples: VMware ESXi, Microsoft Hyper-V, KVM (Linux), Xen</li>
+          <li>Used in: data centres, cloud providers (AWS, Azure, GCP)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Type 2 Hypervisor (Hosted) <span class="badge badge-b">developer use</span></div>
+        <ul class="notes">
+          <li>Runs <strong>on top of a host OS</strong> as an application</li>
+          <li>Simpler to install and use; some performance overhead</li>
+          <li>Examples: VirtualBox, VMware Workstation, Parallels (Mac)</li>
+          <li>Used for: development, testing, running different OS on your laptop</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Containers vs Virtual Machines</h3>
+    <div class="card">
+      <div class="card-title">Containers (Docker) <span class="badge badge-g">lightweight</span></div>
+      <ul class="notes">
+        <li>Containers share the <strong>host OS kernel</strong> — much lighter than VMs (no separate OS per container)</li>
+        <li>Each container gets isolated: filesystem, processes, network, users (via Linux namespaces + cgroups)</li>
+        <li>Start in <strong>milliseconds</strong>; use tens of MBs vs GBs for VMs</li>
+        <li>Docker packages app + dependencies into an image — runs the same everywhere</li>
+        <li><strong>Docker image</strong>: read-only blueprint. <strong>Docker container</strong>: running instance of an image</li>
+        <li>Weakness: less isolation than VMs — containers share kernel (kernel vulnerability affects all)</li>
+      </ul>
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th>Feature</th><th>Virtual Machine</th><th>Container</th></tr></thead>
+      <tbody>
+        <tr><td>OS</td><td>Full OS per VM</td><td>Shared host OS kernel</td></tr>
+        <tr><td>Size</td><td>GBs</td><td>MBs</td></tr>
+        <tr><td>Startup time</td><td>Minutes</td><td>Milliseconds</td></tr>
+        <tr><td>Isolation</td><td>Strong (separate kernel)</td><td>Process-level (shared kernel)</td></tr>
+        <tr><td>Performance</td><td>Near-native (Type 1)</td><td>Near-native</td></tr>
+        <tr><td>Use case</td><td>Full OS isolation, legacy apps</td><td>Microservices, cloud-native apps</td></tr>
+        <tr><td>Examples</td><td>AWS EC2, VirtualBox</td><td>Docker, Kubernetes pods</td></tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box green">💡 Key insight: VMs virtualise hardware; containers virtualise the OS. Use VMs when you need full isolation or a different OS. Use containers for deploying applications efficiently — they're the default in modern DevOps.</div>
+  </section>
+
+  <!-- ══ NEW: Distributed Systems ══ -->
+  <section id="distributed">
+    <div class="section-tag tag-blue">40 — Distributed Systems Basics <span class="badge-new">NEW</span></div>
+    <h2>Distributed Systems Basics</h2>
+    <p class="section-intro">When multiple computers work together to appear as one system — the foundation of the modern internet.</p>
+
+    <div class="card">
+      <div class="card-title">What is a Distributed System?</div>
+      <ul class="notes">
+        <li>A collection of independent computers that <strong>appear to the user as a single coherent system</strong></li>
+        <li>Computers communicate via a network — no shared memory</li>
+        <li>Goals: resource sharing, fault tolerance, scalability, openness</li>
+        <li>Examples: Google's search infrastructure, Amazon's AWS, BitTorrent, DNS</li>
+      </ul>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Key Challenges</div>
+        <ul class="notes">
+          <li><strong>Partial failures</strong>: some nodes fail while others keep running — hard to detect</li>
+          <li><strong>Network partitions</strong>: network splits into disconnected groups</li>
+          <li><strong>Latency</strong>: network communication is orders of magnitude slower than local memory</li>
+          <li><strong>Clock synchronization</strong>: no single global clock — hard to order events</li>
+          <li><strong>Consistency</strong>: keeping data the same across all replicas</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">CAP Theorem <span class="badge badge-a">must know</span></div>
+        <ul class="notes">
+          <li>A distributed system can only guarantee <strong>2 of 3</strong> properties:</li>
+          <li><strong>C — Consistency</strong>: every read returns the latest write</li>
+          <li><strong>A — Availability</strong>: every request gets a (non-error) response</li>
+          <li><strong>P — Partition Tolerance</strong>: system continues operating despite network splits</li>
+          <li>Since network partitions always happen in real systems, you choose: CP (consistent) or AP (available)</li>
+          <li>Example: HBase = CP; Cassandra = AP; RDBMS without replication ≈ CA</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Synchronization in Distributed Systems</div>
+        <ul class="notes">
+          <li><strong>Lamport Timestamps</strong>: logical clocks to order events without real-time clocks</li>
+          <li><strong>Mutual exclusion</strong> via distributed locks (e.g. Redis SETNX, ZooKeeper)</li>
+          <li><strong>Consensus algorithms</strong>: Paxos, Raft — agree on a value among N nodes despite failures</li>
+          <li>Raft is used by etcd (Kubernetes), CockroachDB; Paxos used by Google Chubby</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Distributed OS vs Network OS</div>
+        <ul class="notes">
+          <li><strong>Distributed OS</strong>: tightly coupled — OS manages all nodes as one; users don't see individual machines (e.g. Amoeba)</li>
+          <li><strong>Network OS</strong>: loosely coupled — each machine has its own OS; users log in to specific machines; share via NFS/SMB</li>
+          <li>Most real-world systems are Network OS style; true Distributed OS is mostly research</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inter-Process Communication (IPC) in Distributed Systems</div>
+      <ul class="notes">
+        <li><strong>RPC (Remote Procedure Call)</strong>: call a function on a remote machine as if it's local</li>
+        <li><strong>gRPC</strong>: Google's modern RPC framework using Protocol Buffers (used in microservices)</li>
+        <li><strong>Message Queues</strong>: async communication — sender puts message in queue; receiver processes when ready (RabbitMQ, Kafka)</li>
+        <li><strong>REST APIs</strong>: stateless HTTP communication — most common for web services</li>
+        <li><strong>Shared nothing architecture</strong>: each node has its own memory and storage; communicate only via messages</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 41 — Hot Interview Questions ══ -->
   <section id="hotqs">
-    <div class="section-tag tag-red">27 — Interview Questions</div>
+    <div class="section-tag tag-red">41 — Interview Questions</div>
     <h2>Hot Interview Questions</h2>
     <p class="section-intro">The most commonly asked Operating Systems questions — review before every interview.</p>
 
@@ -1446,6 +2348,15 @@
       <ul class="notes">
         <li><strong>Process</strong>: independent program in execution; has its own memory space; isolated; heavy to create</li>
         <li><strong>Thread</strong>: unit of execution within a process; shares process memory; lightweight; crash can affect whole process</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Q: What is the difference between User Mode and Kernel Mode?</div>
+      <ul class="notes">
+        <li><strong>User Mode</strong>: restricted — apps run here; cannot directly access hardware; crash affects only that process</li>
+        <li><strong>Kernel Mode</strong>: privileged — OS runs here; full hardware access; crash = system crash</li>
+        <li>Transition: system call, interrupt, or exception switches from user → kernel mode</li>
       </ul>
     </div>
 
@@ -1537,7 +2448,34 @@
       </ul>
     </div>
 
-    <div class="highlight-box green">✅ Pro tip: For any OS question about algorithms (scheduling, page replacement, disk scheduling), always mention the <strong>tradeoff</strong> — no single algorithm is best for all situations. LRU is best in practice for page replacement; Round Robin is best for interactive systems; SCAN is best for disk scheduling. Interviewers love candidates who can explain the why.</div>
+    <div class="card">
+      <div class="card-title">Q: Explain the Dining Philosophers problem and one solution.</div>
+      <ul class="notes">
+        <li>5 philosophers around a table; each needs 2 forks to eat; one fork between each pair</li>
+        <li>If all grab left fork at once → circular wait → deadlock</li>
+        <li>Solution: number the forks; philosophers always grab the lower-numbered fork first — breaks circular wait</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Q: What is DMA and why is it important?</div>
+      <ul class="notes">
+        <li>Direct Memory Access — lets hardware transfer data directly between device and RAM without CPU involvement</li>
+        <li>CPU programs the DMA controller (source, destination, size) and is then free for other work</li>
+        <li>Dramatically improves I/O throughput — critical for disk, network, and GPU transfers</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Q: Containers vs Virtual Machines?</div>
+      <ul class="notes">
+        <li><strong>VMs</strong>: full OS isolation, gigabytes in size, minutes to start, strong security boundary</li>
+        <li><strong>Containers</strong>: share host OS kernel, megabytes in size, milliseconds to start, weaker isolation</li>
+        <li>Both used together in production: VMs for isolation between tenants; containers for app deployment within a VM</li>
+      </ul>
+    </div>
+
+    <div class="highlight-box green">✅ Pro tip: For any OS question about algorithms (scheduling, page replacement, disk scheduling), always mention the <strong>tradeoff</strong> — no single algorithm is best for all situations. LRU is best in practice for page replacement; Round Robin is best for interactive systems; SCAN/LOOK is best for disk scheduling. Interviewers love candidates who can explain the <em>why</em>.</div>
   </section>
 
 </main>
